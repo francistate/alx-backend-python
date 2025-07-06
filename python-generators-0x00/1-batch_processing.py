@@ -58,6 +58,7 @@ def stream_users_in_batches(batch_size):
                 
     except Error as e:
         print(f"Error reading data from MySQL: {e}")
+        return
     
     finally:
         # Clean up connections
@@ -68,20 +69,24 @@ def stream_users_in_batches(batch_size):
 
 def batch_processing(batch_size):
     """
-    Process each batch to filter users over the age of 25
+    Generator function that processes each batch to filter users over the age of 25
     
     Args:
         batch_size (int): Size of each batch to process
+        
+    Yields:
+        dict: User data for users over age 25
     """
     # Loop 2: Process each batch from the generator
     for batch in stream_users_in_batches(batch_size):
         # Loop 3: Filter users over age 25 in current batch
         for user in batch:
             if user['age'] > 25:
-                print(user)
+                yield user
+                # print(f"User ID: {user['user_id']}, Name: {user['name']}, Email: {user['email']}, Age: {user['age']}")
 
-# Example usage
-if __name__ == "__main__":
-    batch_size = 10  # Define the batch size
-    batch_processing(batch_size)
+# # # Example usage
+# if __name__ == "__main__":
+#     batch_size = 10  # Define the batch size
+#     batch_processing(batch_size)
     
