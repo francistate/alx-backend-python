@@ -120,27 +120,27 @@ def insert_data(connection, csv_file):
     except FileNotFoundError:
         print(f"CSV file {csv_file} not found")
 
-if __name__ == "__main__":
-    # Connect to MySQL server
-    connection = connect_db()
+# if __name__ == "__main__":
+#     # Connect to MySQL server
+#     connection = connect_db()
     
-    if connection:
-        # Create database ALX_prodev
-        create_database(connection)
+#     if connection:
+#         # Create database ALX_prodev
+#         create_database(connection)
         
-        # Connect to the ALX_prodev database
-        prodev_connection = connect_to_prodev()
+#         # Connect to the ALX_prodev database
+#         prodev_connection = connect_to_prodev()
         
-        if prodev_connection:
-            # Create user_data table
-            create_table(prodev_connection)
+#         if prodev_connection:
+#             # Create user_data table
+#             create_table(prodev_connection)
             
-            # Insert data from CSV file
-            csv_file_path = 'user_data.csv'
-            insert_data(prodev_connection, csv_file_path)
+#             # Insert data from CSV file
+#             csv_file_path = 'user_data.csv'
+#             insert_data(prodev_connection, csv_file_path)
             
-            # Close the database connection
-            prodev_connection.close()
+#             # Close the database connection
+#             prodev_connection.close()
         
-        # Close the MySQL server connection
-        connection.close()
+#         # Close the MySQL server connection
+#         connection.close()
