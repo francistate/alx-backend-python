@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Lazy loading paginated data using generators
 """
@@ -55,12 +56,12 @@ def paginate_users(page_size, offset):
         if connection and connection.is_connected():
             connection.close()
 
-def lazy_paginate(page_size):
+def lazy_paginate(pagesize):
     """
     Generator function that lazily loads pages of users
     
     Args:
-        page_size (int): Number of users per page
+        pagesize (int): Number of users per page
         
     Yields:
         list: Page of user data (list of dictionaries)
@@ -70,7 +71,7 @@ def lazy_paginate(page_size):
     # Single loop: Continue until no more data
     while True:
         # Get the next page using paginate_users function
-        page = paginate_users(page_size, offset)
+        page = paginate_users(pagesize, offset)
         
         # If no data returned, we've reached the end
         if not page:
@@ -80,16 +81,16 @@ def lazy_paginate(page_size):
         yield page
         
         # Move to next page
-        offset += page_size
+        offset += pagesize
 
 # Alternative name for the function (matching the import in main file)
 lazy_pagination = lazy_paginate
 
 # # Example usage
-# if __name__ == "__main__":
-#     page_size = 10  # Define the page size
-#     for i, page in enumerate(lazy_paginate(page_size)):
-#         print(f"Page {i + 1}:")
-#         for user in page:
-#             print(user)
-#         print()
+if __name__ == "__main__":
+    page_size = 10  # Define the page size
+    for i, page in enumerate(lazy_paginate(page_size)):
+        print(f"Page {i + 1}:")
+        for user in page:
+            print(user)
+        print()
