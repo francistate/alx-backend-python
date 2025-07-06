@@ -87,10 +87,10 @@ def lazy_paginate(pagesize):
 lazy_pagination = lazy_paginate
 
 # # Example usage
-if __name__ == "__main__":
-    page_size = 10  # Define the page size
-    for i, page in enumerate(lazy_paginate(page_size)):
-        print(f"Page {i + 1}:")
-        for user in page:
-            print(user)
-        print()
+# if __name__ == "__main__":
+#     page_size = 10  # Define the page size
+#     for i, page in enumerate(lazy_paginate(page_size)):
+#         print(f"Page {i + 1}:")
+#         for user in page:
+#             print(user)
+#         print()
