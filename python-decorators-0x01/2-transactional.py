@@ -12,17 +12,12 @@ def with_db_connection(func):
             connection.close()
     return wrapper
 
-# Objective: create a decorator that manages database transactions by automatically committing or rolling back changes
 
-# Instructions:
-
-# Complete the script below by writing a decorator transactional(func) that ensures a function running a database 
-# operation is wrapped inside a transaction.If the function raises an error, rollback; otherwise commit the transaction.
-
+#  decorator to handle database transactions
 def transactional(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        connection = args[0]  # Assuming the first argument is the database connection
+        connection = args[0]  # ssuming the first argument is the database connection
         try:
             result = func(*args, **kwargs)
             connection.commit()  # commit if no exception occurs
