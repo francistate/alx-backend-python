@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Test cases for client module"""
 import unittest
-from unittest.mock import patch
-from parameterized import parameterized
+from unittest.mock import patch, Mock
+from parameterized import parameterized, parameterized_class
 from client import GithubOrgClient
+from fixtures import TEST_PAYLOAD
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -83,6 +84,36 @@ class TestGithubOrgClient(unittest.TestCase):
         """Test that has_license returns expected boolean result"""
         result = GithubOrgClient.has_license(repo, license_key)
         self.assertEqual(result, expected)
+
+    
+    
+@parameterized_class(
+    ("org_payload", "repos_payload", "expected_repos", "apache2_repos"),
+    TEST_PAYLOAD
+)
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """Integration test class for GithubOrgClient"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up class fixtures"""
+        def side_effect(url):
+            """Mock side effect function for requests.get"""
+            mock_response = Mock()
+            if url == cls.org_payload["repos_url"]:
+                mock_response.json.return_value = cls.repos_payload
+            else:
+                mock_response.json.return_value = cls.org_payload
+            return mock_response
+
+        # start patcher
+        cls.get_patcher = patch('requests.get', side_effect=side_effect)
+        cls.get_patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down class fixtures"""
+        cls.get_patcher.stop()
 
 
 if __name__ == "__main__":
