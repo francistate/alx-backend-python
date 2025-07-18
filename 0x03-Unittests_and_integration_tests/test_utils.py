@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Test cases for utils module"""
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import unittest
 from parameterized import parameterized
 from utils import access_nested_map, get_json, memoize
 from unittest.mock import patch, Mock
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 class TestAccessNestedMap(unittest.TestCase):
@@ -31,6 +30,7 @@ class TestAccessNestedMap(unittest.TestCase):
         # with self.assertRaises(KeyError):
         #     access_nested_map(nested_map, path)
         self.assertRaises(KeyError, access_nested_map, nested_map, path)
+
 
 class TestGetJson(unittest.TestCase):
     """Test class for get_json function"""
@@ -56,6 +56,7 @@ class TestGetJson(unittest.TestCase):
         # assert that the result matches the expected payload
         self.assertEqual(result, test_payload)
 
+
 class TestMemoize(unittest.TestCase):
     """Test class for memoize decorator caches method results"""
 
@@ -63,17 +64,19 @@ class TestMemoize(unittest.TestCase):
         """Test that memoize caches method results"""
 
         class TestClass:
+            """Test class to demonstrate memoization"""
             def a_method(self):
                 return 42
-            
+
             @memoize
             def a_property(self):
                 return self.a_method()
-            
+
         test_object = TestClass()
 
         # patch the method to ensure it is called only once
-        with patch.object(test_object, 'a_method', return_value=42) as mock_method:
+        with patch.object(test_object, 'a_method',
+                          return_value=42) as mock_method:
             # call the property multiple times
             self.assertEqual(test_object.a_property, 42)
             self.assertEqual(test_object.a_property, 42)
