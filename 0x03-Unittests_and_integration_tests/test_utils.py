@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import unittest
 from parameterized import parameterized
-from utils import access_nested_map, get_json
+from utils import access_nested_map, get_json, memoize
 from unittest.mock import patch, Mock
 
 
@@ -55,6 +55,30 @@ class TestGetJson(unittest.TestCase):
         mock_get.assert_called_once_with(test_url)
         # assert that the result matches the expected payload
         self.assertEqual(result, test_payload)
+
+class TestMemoize(unittest.TestCase):
+    """Test class for memoize decorator caches method results"""
+
+    def test_memoize(self):
+        """Test that memoize caches method results"""
+
+        class TestClass:
+            def a_method(self):
+                return 42
+            
+            @memoize
+            def a_property(self):
+                return self.a_method()
+            
+        test_object = TestClass()
+
+        # patch the method to ensure it is called only once
+        with patch.object(test_object, 'a_method', return_value=42) as mock_method:
+            # call the property multiple times
+            self.assertEqual(test_object.a_property, 42)
+            self.assertEqual(test_object.a_property, 42)
+            mock_method.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
