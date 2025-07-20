@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model
     """
-    full_name = serializers.ReadOnlyField()
+    full_name = serializers.CharField(read_only=True)
     
     class Meta:
         model = User
@@ -18,6 +18,14 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True}
         }
+    
+    def validate_email(self, value):
+        """
+        Custom validation for email field
+        """
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -30,8 +38,8 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = [
-            'message_id', 'sender', 'sender_id', 
-            'conversation', 'message_body', 'sent_at'
+            'message_id', 'sender', 'sender_id', 'conversation', 
+            'message_body', 'sent_at'
         ]
         read_only_fields = ['message_id', 'sent_at']
     
@@ -62,8 +70,7 @@ class ConversationSerializer(serializers.ModelSerializer):
         model = Conversation
         fields = [
             'conversation_id', 'participants', 'participant_ids', 
-            'messages', 'created_at', 'participant_count', 
-            'latest_message'
+            'messages', 'created_at', 'participant_count', 'latest_message'
         ]
         read_only_fields = ['conversation_id', 'created_at']
     
@@ -83,9 +90,11 @@ class ConversationSerializer(serializers.ModelSerializer):
         # add participants
         if participant_ids:
             participants = User.objects.filter(user_id__in=participant_ids)
+            if participants.count() != len(participant_ids):
+                raise serializers.ValidationError("One or more participant IDs are invalid.")
             conversation.participants.set(participants)
         
-        # add current user as participant if not already included
+        # add xurrent user as participant if not already included
         current_user = self.context['request'].user
         if current_user not in conversation.participants.all():
             conversation.participants.add(current_user)
@@ -129,12 +138,21 @@ class MessageCreateSerializer(serializers.ModelSerializer):
     Simplified serializer for creating messages
     """
     sender = UserSerializer(read_only=True)
+    message_body = serializers.CharField(max_length=1000)
     
     class Meta:
         model = Message
         fields = ['message_id', 'sender', 'conversation', 
                   'message_body', 'sent_at']
         read_only_fields = ['message_id', 'sender', 'sent_at']
+    
+    def validate_message_body(self, value):
+        """
+        Custom validation for message body
+        """
+        if not value.strip():
+            raise serializers.ValidationError("Message body cannot be empty.")
+        return value.strip()
     
     def create(self, validated_data):
         # automatically set sender to current user
