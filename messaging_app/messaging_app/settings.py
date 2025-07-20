@@ -130,6 +130,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+
+    'DEFAULT_FILTER_BACKENDS': ('rest_framework_nested_test.filters.NestedFilterBackend',),
 }
 
 AUTH_USER_MODEL = 'chats.User'
