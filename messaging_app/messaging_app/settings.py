@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "chats",
+    'rest_framework_nested',
 ]
 
 MIDDLEWARE = [
@@ -131,7 +132,11 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 
-    'DEFAULT_FILTER_BACKENDS': ('rest_framework_nested_test.filters.NestedFilterBackend',),
+    'DEFAULT_FILTER_BACKENDS': [
+    'rest_framework.filters.SearchFilter',
+    'rest_framework.filters.OrderingFilter',
+    ],
+
 }
 
 AUTH_USER_MODEL = 'chats.User'
