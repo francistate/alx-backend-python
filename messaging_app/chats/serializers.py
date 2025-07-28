@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'user_id', 'first_name', 'last_name', 'email', 
+            'user_id', 'username', 'first_name', 'last_name', 'email', 
             'phone_number', 'role', 'created_at', 'full_name'
         ]
         read_only_fields = ['user_id', 'created_at']
@@ -23,7 +23,10 @@ class UserSerializer(serializers.ModelSerializer):
         """
         Custom validation for email field
         """
-        if User.objects.filter(email=value).exists():
+        queryset = User.objects.filter(email=value)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
@@ -34,11 +37,12 @@ class MessageSerializer(serializers.ModelSerializer):
     """
     sender = UserSerializer(read_only=True)
     sender_id = serializers.UUIDField(write_only=True, required=False)
+    conversation_id = serializers.UUIDField(source='conversation.conversation_id', read_only=True)
     
     class Meta:
         model = Message
         fields = [
-            'message_id', 'sender', 'sender_id', 'conversation', 
+            'message_id', 'sender', 'sender_id', 'conversation', 'conversation_id',
             'message_body', 'sent_at'
         ]
         read_only_fields = ['message_id', 'sent_at']
@@ -48,7 +52,11 @@ class MessageSerializer(serializers.ModelSerializer):
         if 'sender_id' not in validated_data:
             validated_data['sender'] = self.context['request'].user
         else:
-            validated_data['sender_id'] = validated_data.pop('sender_id')
+            sender_id = validated_data.pop('sender_id')
+            try:
+                validated_data['sender'] = User.objects.get(user_id=sender_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError("Invalid sender_id")
         return super().create(validated_data)
 
 
@@ -94,7 +102,7 @@ class ConversationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("One or more participant IDs are invalid.")
             conversation.participants.set(participants)
         
-        # add xurrent user as participant if not already included
+        # add current user as participant if not already included
         current_user = self.context['request'].user
         if current_user not in conversation.participants.all():
             conversation.participants.add(current_user)

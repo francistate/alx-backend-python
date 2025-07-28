@@ -1,0 +1,463 @@
+{
+	"info": {
+		"_postman_id": "12345678-1234-1234-1234-123456789012",
+		"name": "Messaging App with JWT Authentication",
+		"description": "Complete API collection for testing messaging app with JWT authentication and permissions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "conversation_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', response.access);",
+									"    pm.collectionVariables.set('refresh_token', response.refresh);",
+									"    pm.collectionVariables.set('user_id', response.user.user_id);",
+									"    pm.test('User registered successfully', () => {",
+									"        pm.expect(response).to.have.property('access');",
+									"        pm.expect(response).to.have.property('user');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"securepass123\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"phone_number\": \"+1234567890\",\n    \"role\": \"guest\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register", ""]
+						},
+						"description": "Register a new user and receive JWT tokens"
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', response.access);",
+									"    pm.collectionVariables.set('refresh_token', response.refresh);",
+									"    pm.test('Login successful', () => {",
+									"        pm.expect(response).to.have.property('access');",
+									"        pm.expect(response).to.have.property('user');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"securepass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", ""]
+						},
+						"description": "Login with email and password to get JWT tokens"
+					}
+				},
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile", ""]
+						},
+						"description": "Get current user profile (requires authentication)"
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', response.access);",
+									"    pm.test('Token refreshed successfully', () => {",
+									"        pm.expect(response).to.have.property('access');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/token/refresh/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "token", "refresh", ""]
+						},
+						"description": "Refresh access token using refresh token"
+					}
+				},
+				{
+					"name": "Logout User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/logout/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout", ""]
+						},
+						"description": "Logout user by blacklisting refresh token"
+					}
+				}
+			],
+			"description": "Authentication related endpoints"
+		},
+		{
+			"name": "Conversations",
+			"item": [
+				{
+					"name": "List Conversations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/conversations/?page=1&page_size=10",
+							"host": ["{{base_url}}"],
+							"path": ["conversations", ""],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "page_size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "List all conversations for authenticated user with pagination"
+					}
+				},
+				{
+					"name": "Create Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('conversation_id', response.conversation_id);",
+									"    pm.test('Conversation created successfully', () => {",
+									"        pm.expect(response).to.have.property('conversation_id');",
+									"        pm.expect(response).to.have.property('participants');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"participant_ids\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/conversations/",
+							"host": ["{{base_url}}"],
+							"path": ["conversations", ""]
+						},
+						"description": "Create a new conversation"
+					}
+				},
+				{
+					"name": "Get Conversation Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/conversations/{{conversation_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["conversations", "{{conversation_id}}", ""]
+						},
+						"description": "Get details of a specific conversation"
+					}
+				},
+				{
+					"name": "Filter Conversations by Date",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/conversations/?created_after=2025-01-01&created_before=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["conversations", ""],
+							"query": [
+								{
+									"key": "created_after",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "created_before",
+									"value": "2025-12-31"
+								}
+							]
+						},
+						"description": "Filter conversations by creation date range"
+					}
+				}
+			],
+			"description": "Conversation management endpoints"
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "List Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/messages/?page=1&page_size=20",
+							"host": ["{{base_url}}"],
+							"path": ["messages", ""],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "page_size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "List all messages for authenticated user with pagination (20 per page)"
+					}
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conversation\": \"{{conversation_id}}\",\n    \"message_body\": \"Hello! This is a test message.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["messages", ""]
+						},
+						"description": "Send a message to a conversation"
+					}
+				},
+				{
+					"name": "Filter Messages by Time Range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/messages/?sent_after=2025-01-01T00:00:00Z&sent_before=2025-12-31T23:59:59Z",
+							"host": ["{{base_url}}"],
+							"path": ["messages", ""],
+							"query": [
+								{
+									"key": "sent_after",
+									"value": "2025-01-01T00:00:00Z"
+								},
+								{
+									"key": "sent_before",
+									"value": "2025-12-31T23:59:59Z"
+								}
+							]
+						},
+						"description": "Filter messages by time range"
+					}
+				},
+				{
+					"name": "Search Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/messages/?search=hello&message_contains=test",
+							"host": ["{{base_url}}"],
+							"path": ["messages", ""],
+							"query": [
+								{
+									"key": "search",
+									"value": "hello"
+								},
+								{
+									"key": "message_contains",
+									"value": "test"
+								}
+							]
+						},
+						"description": "Search messages by content"
+					}
+				},
+				{
+					"name": "Messages in Conversation (Nested)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/conversations/{{conversation_id}}/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["conversations", "{{conversation_id}}", "messages", ""]
+						},
+						"description": "Get all messages in a specific conversation (nested route)"
+					}
+				}
+			],
+			"description": "Message management endpoints"
+		},
+		{
+			"name": "Unauthorized Access Tests",
+			"item": [
+				{
+					"name": "Access Conversations Without Token",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/conversations/",
+							"host": ["{{base_url}}"],
+							"path": ["conversations", ""]
+						},
+						"description": "Test accessing conversations without authentication (should return 401)"
+					}
+				},
+				{
+					"name": "Access Messages Without Token",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["messages", ""]
+						},
+						"description": "Test accessing messages without authentication (should return 401)"
+					}
+				}
+			],
+			"description": "Test endpoints without authentication to ensure proper security"
+		}
+	]
+}

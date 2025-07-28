@@ -19,5 +19,4 @@ conversations_router.register(r'messages', MessageViewSet,
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(conversations_router.urls)),
-    # path('api-auth/', include('rest_framework.urls')),  # uncomment if you want to enable browsable API authentication
 ]

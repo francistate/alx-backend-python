@@ -6,7 +6,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import User, Conversation, Message
+from .permissions import IsParticipantOfConversation, IsOwnerOrParticipant, IsAuthenticatedAndParticipant
+from .filters import MessageFilter, ConversationFilter
+from .pagination import MessagePagination, ConversationPagination
 from .serializers import (
     UserSerializer, 
     ConversationSerializer, 
@@ -20,9 +24,13 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating conversations
     """
-    permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['participants__first_name', 'participants__last_name']
+    permission_classes = [IsAuthenticatedAndParticipant]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ConversationFilter
+    search_fields = ['participants__first_name', 'participants__last_name', 'participants__email']
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+    pagination_class = ConversationPagination
     
     def get_queryset(self):
         """
@@ -119,7 +127,13 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating messages
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndParticipant]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = MessageFilter
+    search_fields = ['message_body', 'sender__first_name', 'sender__last_name', 'sender__email']
+    ordering_fields = ['sent_at']
+    ordering = ['-sent_at']
+    pagination_class = MessagePagination
     
     def get_queryset(self):
         """
