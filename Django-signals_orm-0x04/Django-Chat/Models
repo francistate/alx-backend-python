@@ -1,0 +1,97 @@
+# Django-Chat Models for Threaded Conversations
+# This file contains the model definitions for threaded messaging functionality
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+import uuid
+
+
+class ThreadedChatMessage(models.Model):
+    """
+    Enhanced message model for threaded conversations with optimized querying.
+    Task 3: Leverage Advanced ORM Techniques for Threaded Conversations
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='chat_sent_messages'
+    )
+    receiver = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='chat_received_messages'
+    )
+    content = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+    
+    # Self-referential foreign key for threaded conversations
+    parent_message = models.ForeignKey(
+        'self', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='replies',
+        db_index=True
+    )
+    
+    # Optimization fields
+    thread_depth = models.PositiveIntegerField(default=0, db_index=True)
+    thread_root_id = models.UUIDField(null=True, blank=True, db_index=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['sender', 'timestamp']),
+            models.Index(fields=['receiver', 'timestamp']),
+            models.Index(fields=['parent_message', 'timestamp']),
+            models.Index(fields=['thread_root_id', 'thread_depth']),
+        ]
+    
+    def save(self, *args, **kwargs):
+        """Override save to set thread optimization fields."""
+        if self.parent_message:
+            self.thread_depth = self.parent_message.thread_depth + 1
+            self.thread_root_id = self.parent_message.thread_root_id or self.parent_message.id
+        else:
+            self.thread_depth = 0
+            self.thread_root_id = None
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        indent = "  " * self.thread_depth
+        return f"{indent}Message from {self.sender.username}: {self.content[:50]}..."
+    
+    @classmethod
+    def get_optimized_thread(cls, root_message_id):
+        """
+        Get an entire thread with optimized queries using select_related and prefetch_related.
+        This method demonstrates advanced ORM techniques for reducing database queries.
+        """
+        return cls.objects.select_related('sender', 'receiver').prefetch_related(
+            models.Prefetch(
+                'replies',
+                queryset=cls.objects.select_related('sender', 'receiver').order_by('timestamp')
+            )
+        ).filter(
+            models.Q(id=root_message_id) | models.Q(thread_root_id=root_message_id)
+        ).order_by('thread_depth', 'timestamp')
+    
+    def get_thread_participants(self):
+        """Get all participants in this thread."""
+        if self.thread_root_id:
+            thread_messages = ThreadedChatMessage.objects.filter(
+                models.Q(id=self.thread_root_id) | models.Q(thread_root_id=self.thread_root_id)
+            )
+        else:
+            thread_messages = ThreadedChatMessage.objects.filter(
+                models.Q(id=self.id) | models.Q(thread_root_id=self.id)
+            )
+        
+        participants = set()
+        for message in thread_messages:
+            participants.add(message.sender)
+            participants.add(message.receiver)
+        
+        return list(participants)

@@ -1,0 +1,91 @@
+# messaging/Models - Task 1 Implementation
+# Create a Signal for Logging Message Edits
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+import uuid
+
+
+class EditableMessage(models.Model):
+    """
+    Message model with edit tracking functionality for Task 1.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_editable_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_editable_messages')
+    content = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+    
+    # Task 1: Field to track if message has been edited
+    edited = models.BooleanField(default=False)
+    last_edited_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['sender', 'timestamp']),
+            models.Index(fields=['receiver', 'edited']),
+        ]
+    
+    def __str__(self):
+        edited_indicator = " (edited)" if self.edited else ""
+        return f"Message from {self.sender.username}{edited_indicator}: {self.content[:50]}..."
+    
+    def get_edit_count(self):
+        """Get the number of times this message has been edited."""
+        return self.edit_history.count()
+
+
+class MessageEditHistory(models.Model):
+    """
+    Task 1: Model to store edit history of messages.
+    Stores old content before message is updated using pre_save signal.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    message = models.ForeignKey(
+        EditableMessage, 
+        on_delete=models.CASCADE, 
+        related_name='edit_history'
+    )
+    old_content = models.TextField()
+    edited_at = models.DateTimeField(default=timezone.now)
+    edited_by = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='message_edit_history'
+    )
+    
+    class Meta:
+        ordering = ['-edited_at']
+        indexes = [
+            models.Index(fields=['message', 'edited_at']),
+            models.Index(fields=['edited_by', 'edited_at']),
+        ]
+    
+    def __str__(self):
+        return f"Edit #{self.id} for message {self.message.id} at {self.edited_at}"
+
+
+# Signal implementations for Task 1 would be in signals.py:
+"""
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+
+@receiver(pre_save, sender=EditableMessage)
+def log_message_edit(sender, instance, **kwargs):
+    if instance.pk:  # Only for existing messages (updates)
+        try:
+            old_message = EditableMessage.objects.get(pk=instance.pk)
+            if old_message.content != instance.content:
+                # Log the old content before update
+                MessageEditHistory.objects.create(
+                    message=instance,
+                    old_content=old_message.content,
+                    edited_by=instance.sender
+                )
+                instance.edited = True
+                instance.last_edited_at = timezone.now()
+        except EditableMessage.DoesNotExist:
+            pass
+"""

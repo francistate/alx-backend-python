@@ -45,3 +45,5 @@ Thumbs.db
 #database
 data/
 users.db
+*.sqlite3
+db.sqlite3
