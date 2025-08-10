@@ -12,14 +12,16 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+      sh -c "python3 manage.py migrate &&
+             python3 manage.py runserver 0.0.0.0:8000"
 
   db:
     image: mysql:8.0
     environment:
+      MYSQL_DB: messaging_app_db
       MYSQL_DATABASE: messaging_app_db
       MYSQL_USER: root
+      MYSQL_PASSWORD: rootpassword
       MYSQL_ROOT_PASSWORD: rootpassword
     ports:
       - "3306:3306"
